@@ -3,7 +3,7 @@
 
   /* Settings. API stays empty until the Microsoft logging endpoint is live;
      until then forms fall back to WhatsApp or email and nothing is logged. */
-  const API = "";
+  const API = "https://jutte-consultas.azurewebsites.net/api/consulta";
   const WHATSAPP = "573165215117";
   const MAIL = "william@jutte.co";
   const POLICY_VERSION = "2026-11-24";
