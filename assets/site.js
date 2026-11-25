@@ -142,7 +142,7 @@
   }
 
   $$("form[data-lead=contacto]").forEach(f => {
-    const pick = { diagnostico: "Diagnóstico de Microsoft 365", blindaje: "Blindaje de correo y cuentas", vigilancia: "Plan Vigilancia", chequeo: "Chequeo de correo" }[new URLSearchParams(location.search).get("servicio")];
+    const pick = { correo: "Protección de correo", diagnostico: "Diagnóstico de Microsoft 365", blindaje: "Blindaje de Microsoft 365", vigilancia: "Plan Vigilancia", chequeo: "Chequeo de correo" }[new URLSearchParams(location.search).get("servicio")];
     if (pick && f.elements.servicio) f.elements.servicio.value = pick;
     wireForm(f);
   });
@@ -274,6 +274,14 @@
       : res.puntos === 1
         ? "Encontramos 1 punto débil en la protección de su correo."
         : "Encontramos " + res.puntos + " puntos débiles en la protección de su correo."));
+
+    const next = el("p", "next-step");
+    const strong = el("strong", null, res.nivel === "bajo" ? "Diagnóstico de Microsoft 365" : "Protección de correo");
+    const link = el("a", null, "Ver qué incluye");
+    link.href = res.nivel === "bajo" ? "servicios.html#diagnostico" : "servicios.html#correo";
+    next.append(document.createTextNode("Siguiente paso: "), strong,
+      document.createTextNode(res.nivel === "bajo" ? ", desde $1.600.000. " : ", precio fijo de $890.000 por dominio. "), link);
+    out.append(next);
 
     const gate = el("div", "gate");
     gate.append(el("h3", null, c.gateTitle), el("p", null, c.gateText));
