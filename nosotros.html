@@ -26,12 +26,12 @@
   <div class="wrap bar">
     <a class="brand" href="./" aria-label="Jutte, inicio">jutte</a>
     <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu">Menú</button>
-    <nav class="menu" id="menu" aria-label="Principal"><a href="servicios.html">Servicios</a><a href="nosotros.html" aria-current="page">Nosotros</a><a href="contacto.html">Contacto</a><a class="pill" href="./#revisar">Revisar mi dominio</a></nav>
+    <nav class="menu" id="menu" aria-label="Principal"><a href="./">Inicio</a><a href="servicios.html">Servicios</a><a href="nosotros.html" aria-current="page">Nosotros</a><a href="contacto.html">Contacto</a><a class="pill" href="./#revisar">Revisar mi dominio</a></nav>
   </div>
 </header>
 
 <main id="main">
-  <section class="page-hero" aria-labelledby="page-title">
+  <section class="page-hero light" aria-labelledby="page-title">
     <div class="wrap">
       <p class="kicker">Nosotros</p>
       <h1 class="title" id="page-title">Seguridad seria, explicada en español claro.</h1>
@@ -40,11 +40,13 @@
   </section>
 
   <section class="band" aria-labelledby="why-title">
-    <div class="wrap narrow prose">
-      <h2 class="big" id="why-title" data-reveal>Por qué existimos.</h2>
-      <p data-reveal>Las empresas grandes tienen un equipo de seguridad. Las firmas de abogados, los contadores y las clínicas casi nunca lo tienen, aunque manejan información igual de delicada y viven del correo.</p>
-      <p data-reveal>Jutte nació para cerrar esa brecha: llevar las protecciones que usan las grandes empresas a firmas de 5 a 200 personas, con precio fijo y sin tecnicismos.</p>
-      <p class="muted" data-reveal>Nuestra experiencia viene de proteger a diario Microsoft 365 y Azure en empresas que manejan datos de salud en Estados Unidos, donde la ley no perdona errores. Ese mismo rigor es el que aplicamos aquí.</p>
+    <div class="wrap narrow">
+      <p class="kicker" id="why-title" data-reveal>Por qué existimos</p>
+      <p class="statement" data-reveal>Las empresas grandes tienen un equipo de seguridad. Las firmas de abogados, los contadores y las clínicas casi nunca, aunque manejan información igual de delicada y <em>viven del correo</em>.</p>
+      <div class="prose">
+        <p data-reveal>Jutte nació para cerrar esa brecha: llevar las protecciones que usan las grandes empresas a firmas de 5 a 200 personas, con precio fijo y sin tecnicismos.</p>
+        <p class="muted" data-reveal>Nuestra experiencia viene de proteger a diario Microsoft 365 y Azure en empresas que manejan datos de salud en Estados Unidos, donde la ley no perdona errores. Ese mismo rigor es el que aplicamos aquí.</p>
+      </div>
     </div>
   </section>
 
@@ -65,30 +67,15 @@
   </section>
 
   <section class="band" aria-labelledby="how-title">
-    <div class="wrap">
+    <div class="wrap narrow">
       <h2 class="big" id="how-title" data-reveal>Cómo trabajamos.</h2>
-      <ul class="rows">
-        <li data-reveal>
-          <h3>Hablamos claro</h3>
-          <p>Cada riesgo y cada cambio se explica en palabras simples, para la gerencia y para el equipo.</p>
-        </li>
-        <li data-reveal>
-          <h3>Acceso mínimo</h3>
-          <p>Usamos permisos de solo lectura siempre que se puede, cuentas separadas para trabajar y retiramos todo acceso al terminar.</p>
-        </li>
-        <li data-reveal>
-          <h3>Confidencialidad</h3>
-          <p>Lo que vemos en su empresa se queda en su empresa. Su información no sale de su Microsoft 365.</p>
-        </li>
-        <li data-reveal>
-          <h3>Por etapas</h3>
-          <p>Hacemos los cambios de a poco y avisando, para que su equipo siga trabajando sin interrupciones.</p>
-        </li>
-        <li data-reveal>
-          <h3>Practicamos lo que vendemos</h3>
-          <p>jutte.co tiene todas las protecciones que recomendamos. <a href="./?dominio=jutte.co">Compruébelo usted mismo</a>.</p>
-        </li>
-      </ul>
+      <ol class="timeline">
+        <li data-reveal><span class="dot" aria-hidden="true">1</span><h3>Hablamos claro</h3><p>Cada riesgo y cada cambio se explica en palabras simples, para la gerencia y para el equipo.</p></li>
+        <li data-reveal><span class="dot" aria-hidden="true">2</span><h3>Entramos con lo mínimo</h3><p>Permisos de solo lectura siempre que se puede y cuentas separadas para trabajar. Al terminar, retiramos todo acceso.</p></li>
+        <li data-reveal><span class="dot" aria-hidden="true">3</span><h3>Lo suyo se queda con usted</h3><p>Lo que vemos en su empresa es confidencial. Su información no sale de su Microsoft 365.</p></li>
+        <li data-reveal><span class="dot" aria-hidden="true">4</span><h3>Cambiamos por etapas</h3><p>De a poco y avisando antes, para que su equipo siga trabajando sin interrupciones.</p></li>
+        <li data-reveal><span class="dot" aria-hidden="true">5</span><h3>Practicamos lo que vendemos</h3><p>jutte.co tiene todas las protecciones que recomendamos. <a href="./?dominio=jutte.co">Compruébelo usted mismo</a>.</p></li>
+      </ol>
     </div>
   </section>
 
@@ -135,8 +122,9 @@
         <h2>Servicios</h2>
         <ul>
           <li><a href="servicios.html#chequeo">Chequeo de correo</a></li>
+          <li><a href="servicios.html#correo">Protección de correo</a></li>
           <li><a href="servicios.html#diagnostico">Diagnóstico de Microsoft 365</a></li>
-          <li><a href="servicios.html#blindaje">Blindaje de correo y cuentas</a></li>
+          <li><a href="servicios.html#blindaje">Blindaje de Microsoft 365</a></li>
           <li><a href="servicios.html#vigilancia">Plan Vigilancia</a></li>
           <li><a href="servicios.html#otros">Otros servicios</a></li>
         </ul>
@@ -144,6 +132,7 @@
       <div>
         <h2>Jutte</h2>
         <ul>
+          <li><a href="./">Inicio</a></li>
           <li><a href="nosotros.html">Nosotros</a></li>
           <li><a href="contacto.html">Contacto</a></li>
           <li><a href="./#revisar">Revisar mi dominio</a></li>
