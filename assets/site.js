@@ -1,12 +1,12 @@
 (() => {
   "use strict";
 
-  /* Settings. API stays empty until the Microsoft logging endpoint is live;
-     until then forms fall back to WhatsApp or email and nothing is logged. */
+  /* Settings */
   const API = "https://jutte-consultas.azurewebsites.net/api/consulta";
   const WHATSAPP = "573165215117";
-  const MAIL = "william@jutte.co";
-  const POLICY_VERSION = "2026-11-24";
+  const MAIL = "contact@jutte.co";
+  const BOOKINGS = "https://bookings.cloud.microsoft/book/JutteBookings@jutte.co/";  /* Microsoft Bookings page */
+  const POLICY_VERSION = "2026-11-27";
 
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const $ = (s, r = document) => r.querySelector(s);
@@ -64,17 +64,21 @@
     }
   }
 
-  /* Sending to the endpoint. text/plain keeps it a simple request (no preflight). */
-  async function send(payload) {
-    if (!API) return false;
+  /* Calls to the Jutte endpoint. text/plain keeps it a simple request (no CORS preflight). */
+  async function post(payload, opts = {}) {
+    if (!API) throw new Error("no-api");
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), opts.timeout || 25000);
     try {
       const r = await fetch(API, {
-        method: "POST", mode: "cors", keepalive: true, referrerPolicy: "no-referrer",
-        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        method: "POST", mode: "cors", keepalive: !!opts.keepalive, referrerPolicy: "no-referrer",
+        signal: ctrl.signal, headers: { "Content-Type": "text/plain;charset=UTF-8" },
         body: JSON.stringify(Object.assign({ pagina: location.pathname }, payload))
       });
-      return r.ok;
-    } catch (e) { return false; }
+      let data = {};
+      try { data = await r.json(); } catch (e) { /* empty or non-JSON body */ }
+      return { status: r.status, data };
+    } finally { clearTimeout(timer); }
   }
 
   function el(tag, cls, text) {
@@ -83,184 +87,126 @@
     if (text != null) n.textContent = text;
     return n;
   }
+  function link(text, href, cls, external) {
+    const a = el("a", cls, text);
+    a.href = href;
+    if (external) { a.target = "_blank"; a.rel = "noopener"; }
+    return a;
+  }
 
-  /* Lead forms (result gate and contact page) */
-  function wireForm(form, extra) {
+  /* Shared validation */
+  const FREE = new Set(["gmail.com", "googlemail.com", "hotmail.com", "hotmail.es", "outlook.com", "outlook.es",
+    "live.com", "live.com.mx", "msn.com", "yahoo.com", "yahoo.es", "ymail.com", "icloud.com", "me.com", "aol.com",
+    "protonmail.com", "proton.me", "gmx.com", "zoho.com", "une.net.co", "etb.net.co"]);
+  const EMAIL_RE = /^[^\s@]+@([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*\.[a-z]{2,63})$/i;
+  const domainOf = email => { const m = EMAIL_RE.exec(email); return m ? m[1].toLowerCase() : null; };
+  const phoneOk = v => { const d = v.replace(/\D/g, ""); return d.length >= 7 && d.length <= 15 && !/[^\d\s+().-]/.test(v); };
+
+  /* Contact page form */
+  $$("form[data-lead=contacto]").forEach(form => {
+    const pick = { correo: "Protección de correo", diagnostico: "Diagnóstico de Microsoft 365", blindaje: "Blindaje de Microsoft 365",
+      vigilancia: "Plan Vigilancia", chequeo: "Revisión de correo" }[new URLSearchParams(location.search).get("servicio")];
+    if (pick && form.elements.servicio) form.elements.servicio.value = pick;
     const err = $(".msg", form);
-    const done = $(".done", form.parentElement) || $(".done", form);
+    const done = $(".done", form.parentElement);
     form.addEventListener("submit", async e => {
       e.preventDefault();
       err.hidden = true;
       const data = Object.fromEntries(new FormData(form).entries());
       const nombre = (data.nombre || "").trim();
       const correo = (data.correo || "").trim();
+      const whatsapp = (data.whatsapp || "").trim();
       const fail = t => { err.textContent = t; err.hidden = false; };
       if (!nombre) return fail("Escriba su nombre.");
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(correo)) return fail("Revise su correo: debe verse así, nombre@suempresa.com.co.");
+      if (!domainOf(correo)) return fail("Revise su correo. Debe verse así: nombre@suempresa.com.co.");
+      if (!phoneOk(whatsapp)) return fail("Revise su WhatsApp. Escriba el número completo, por ejemplo 300 123 4567.");
       if (!form.elements.consentimiento.checked) return fail("Para responderle necesitamos su autorización para usar estos datos.");
-      const payload = Object.assign({}, extra ? extra() : {}, {
-        tipo: form.dataset.lead, nombre, correo,
-        whatsapp: (data.whatsapp || "").trim(), empresa: (data.empresa || "").trim(),
+      const payload = {
+        tipo: "contacto", nombre, correo, whatsapp, empresa: (data.empresa || "").trim(),
         servicio: data.servicio || "", mensaje: (data.mensaje || "").trim(),
-        consentimiento: true, politica: POLICY_VERSION
-      });
+        consentimiento: true, politica: POLICY_VERSION, jt_confirm: data.jt_confirm || ""
+      };
       const btn = $("button[type=submit]", form);
       btn.disabled = true;
-      const ok = await send(payload);
+      btn.textContent = "Enviando…";
+      let ok = false;
+      try { ok = (await post(payload)).status === 200; } catch (x) { ok = false; }
       btn.disabled = false;
-      const subject = payload.dominio ? payload.dominio : payload.empresa || "Jutte";
+      btn.textContent = "Enviar mensaje";
+      form.hidden = true;
       if (ok) {
-        form.hidden = true;
-        done.textContent = form.dataset.lead === "contacto"
-          ? "Recibido, " + nombre + ". Le respondemos a " + correo + " el mismo día hábil o el siguiente."
-          : "Listo, " + nombre + ". Le enviamos el informe de " + subject + " a " + correo + " en el siguiente día hábil.";
+        done.replaceChildren(el("p", null, "Recibido, " + nombre + ". Le respondemos a " + correo + " el mismo día hábil o el siguiente."));
         done.hidden = false;
         return;
       }
-      const lines = ["Hola, soy " + nombre + " (" + correo + (payload.whatsapp ? ", " + payload.whatsapp : "") + ")."];
-      if (form.dataset.lead === "contacto") {
-        if (payload.empresa) lines.push("Empresa: " + payload.empresa + ".");
-        if (payload.servicio) lines.push("Me interesa: " + payload.servicio + ".");
-        if (payload.mensaje) lines.push(payload.mensaje);
-      } else {
-        lines.push("Quiero el informe completo de " + subject + ".");
-      }
+      const lines = ["Hola, soy " + nombre + " (" + correo + ", " + whatsapp + ")."];
+      if (payload.empresa) lines.push("Empresa: " + payload.empresa + ".");
+      if (payload.servicio) lines.push("Me interesa: " + payload.servicio + ".");
+      if (payload.mensaje) lines.push(payload.mensaje);
       const text = lines.join("\n");
-      form.hidden = true;
-      done.replaceChildren(
-        el("p", null, "Gracias, " + nombre + ". Para terminar, envíenos su solicitud por uno de estos medios:"),
-      );
       const row = el("div", "form-actions");
-      const a1 = el("a", "btn btn-green", "Enviar por WhatsApp");
-      a1.href = wa(text); a1.target = "_blank"; a1.rel = "noopener";
-      const a2 = el("a", "btn btn-line", "Enviar por correo");
-      a2.href = "mailto:" + MAIL + "?subject=" + encodeURIComponent((form.dataset.lead === "contacto" ? "Contacto: " : "Informe completo: ") + subject) + "&body=" + encodeURIComponent(text);
-      row.append(a1, a2);
-      done.append(row);
+      row.append(link("Enviar por WhatsApp", wa(text), "btn btn-green", true),
+        link("Enviar por correo", "mailto:" + MAIL + "?subject=" + encodeURIComponent("Contacto: " + (payload.empresa || nombre)) + "&body=" + encodeURIComponent(text), "btn btn-line"));
+      done.replaceChildren(el("p", null, "Gracias, " + nombre + ". No pudimos enviar el formulario en este momento. Envíenos su mensaje por uno de estos medios:"), row);
       done.hidden = false;
     });
-  }
-
-  $$("form[data-lead=contacto]").forEach(f => {
-    const pick = { correo: "Protección de correo", diagnostico: "Diagnóstico de Microsoft 365", blindaje: "Blindaje de Microsoft 365", vigilancia: "Plan Vigilancia", chequeo: "Chequeo de correo" }[new URLSearchParams(location.search).get("servicio")];
-    if (pick && f.elements.servicio) f.elements.servicio.value = pick;
-    wireForm(f);
   });
 
-  /* Domain checker */
+  /* Free email check: contact details first, then the result */
   const form = $("#check");
   if (!form) return;
-  const DOH = "https://dns.google/resolve";
-  const FREE = new Set(["gmail.com", "googlemail.com", "hotmail.com", "hotmail.es", "outlook.com", "outlook.es",
-    "live.com", "msn.com", "yahoo.com", "yahoo.es", "icloud.com", "me.com", "aol.com", "protonmail.com", "proton.me"]);
-  const input = $("#dominio");
+  const emailIn = $("#c-correo");
+  const waIn = $("#c-wa");
   const btn = $("#check-btn");
   const msg = $("#check-msg");
   const out = $("#result");
   const section = $("#revisar");
-  let current = null;
+  const params = new URLSearchParams(location.search);
+  const ref = (params.get("r") || "").slice(0, 60);
 
-  function normalize(raw) {
-    let s = String(raw || "").trim().toLowerCase();
-    if (!s) return "";
-    if (s.includes("@")) s = s.slice(s.lastIndexOf("@") + 1);
-    s = s.replace(/^[a-z][a-z0-9+.-]*:\/\//, "").split(/[\/?#:\s]/)[0];
-    s = s.replace(/^www\./, "").replace(/\.+$/, "");
-    try { s = new URL("http://" + s).hostname; } catch (e) { return null; }
-    return /^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})$/.test(s) ? s : null;
-  }
-
-  async function query(name, type) {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 8000);
-    try {
-      const r = await fetch(DOH + "?name=" + encodeURIComponent(name) + "&type=" + type,
-        { signal: ctrl.signal, cache: "no-store", referrerPolicy: "no-referrer" });
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return await r.json();
-    } finally { clearTimeout(timer); }
-  }
-
-  const answers = (j, type) => (j && Array.isArray(j.Answer) ? j.Answer.filter(a => a.type === type).map(a => String(a.data)) : []);
-  const unquote = d => {
-    const parts = [...d.matchAll(/"((?:[^"\\]|\\.)*)"/g)].map(m => m[1].replace(/\\(.)/g, "$1"));
-    return parts.length ? parts.join("") : d;
+  const PLANS = {
+    correo: { name: "Protección de correo", price: "$890.000", unit: "por dominio, pago único",
+      text: "Corregimos lo que encontramos para que nadie pueda enviar correos en nombre de su empresa.", href: "servicios.html#correo" },
+    diagnostico: { name: "Diagnóstico de Microsoft 365", price: "Desde $1.600.000", unit: "en un solo pago",
+      text: "Revisamos cuentas, accesos, archivos y equipos, y le entregamos un plan claro de 30 días.", href: "servicios.html#diagnostico" },
+    vigilancia: { name: "Plan Vigilancia", price: "Desde $450.000", unit: "al mes",
+      text: "Cada mes confirmamos que su correo siga protegido y le avisamos si alguien intenta usar su dominio.", href: "servicios.html#vigilancia" }
   };
-
-  /* Technical analysis: kept for the log, never shown to the visitor. */
-  function analyze(mx, txt, dmarcJ, dkimMs, dkimG) {
-    const mxHosts = answers(mx, 15).map(x => x.trim().split(/\s+/).pop().replace(/\.$/, "").toLowerCase());
-    let plataforma = "ninguna";
-    if (mxHosts.some(h => /\.mail\.protection\.outlook\.com$|\.mx\.microsoft$/.test(h))) plataforma = "microsoft365";
-    else if (mxHosts.some(h => /(^|\.)google(mail)?\.com$/.test(h))) plataforma = "google";
-    else if (mxHosts.length) plataforma = "otro";
-
-    const spfRecs = answers(txt, 16).map(unquote).filter(t => /^v=spf1(\s|$)/i.test(t.trim()));
-    let spf;
-    if (!spfRecs.length) spf = "falta";
-    else if (spfRecs.length > 1) spf = "duplicado";
-    else {
-      const m = spfRecs[0].match(/(?:^|\s)([+\-~?]?)all(?=\s|$)/i);
-      if (!m) spf = /redirect=/i.test(spfRecs[0]) ? "redirect" : "sin-all";
-      else spf = { "-": "estricto", "~": "suave", "?": "neutral", "+": "abierto", "": "abierto" }[m[1]];
-    }
-
-    const dmarcRecs = answers(dmarcJ, 16).map(unquote).filter(t => /^v=dmarc1\s*(;|$)/i.test(t.trim()));
-    let dmarc;
-    if (!dmarcRecs.length) dmarc = "falta";
-    else if (dmarcRecs.length > 1) dmarc = "duplicado";
-    else {
-      const pm = dmarcRecs[0].match(/(?:^|;)\s*p\s*=\s*([a-z]+)/i);
-      const p = pm ? pm[1].toLowerCase() : "";
-      dmarc = ["none", "quarantine", "reject"].includes(p) ? p : "invalido";
-    }
-
-    let dkim = "no-aplica";
-    if (plataforma === "microsoft365") dkim = answers(dkimMs, 5).length ? "si" : "no";
-    else if (plataforma === "google") dkim = answers(dkimG, 16).some(t => /v=dkim1|k=rsa|p=/i.test(unquote(t))) ? "si" : "no";
-
-    const severe = ["falta", "duplicado", "invalido", "none"].includes(dmarc) || ["falta", "duplicado", "abierto"].includes(spf);
-    let puntos = 0;
-    if (!["estricto", "redirect"].includes(spf)) puntos++;
-    if (dmarc !== "reject") puntos++;
-    if (dkim === "no") puntos++;
-    const nivel = severe ? "alto" : puntos ? "medio" : "bajo";
-    return { plataforma, spf, dmarc, dkim, puntos, nivel, mx: mxHosts.slice(0, 3).join(" ") };
-  }
+  const planFor = res => res.nivel !== "bajo" ? "correo" : res.plataforma === "microsoft365" ? "diagnostico" : "vigilancia";
 
   const COPY = {
-    alto: {
-      label: "Riesgo alto",
-      title: d => "Hoy alguien podría enviar correos con el nombre de " + d + ".",
-      sub: "Y llegarían a la bandeja de entrada de sus clientes y de su propio equipo, sin ninguna advertencia.",
-      gateTitle: "Reciba el informe completo, gratis",
-      gateText: "Le explicamos qué falta, qué riesgo trae y cómo cerrarlo, en palabras simples. Se lo enviamos en un día hábil.",
-      cta: "Recibir el informe"
-    },
-    medio: {
-      label: "Riesgo medio",
-      title: d => d + " tiene protección, pero con huecos.",
-      sub: "Algunos correos falsos con su nombre todavía podrían llegar a quien no deben.",
-      gateTitle: "Reciba el informe completo, gratis",
-      gateText: "Le explicamos qué falta y cómo cerrarlo, en palabras simples. Se lo enviamos en un día hábil.",
-      cta: "Recibir el informe"
-    },
-    bajo: {
-      label: "Riesgo bajo",
-      title: d => "El correo de " + d + " está bien protegido en lo básico.",
-      sub: "El siguiente riesgo suele estar en las cuentas: contraseñas, accesos y administradores.",
-      gateTitle: "¿Revisamos también sus cuentas?",
-      gateText: "Le contamos cómo funciona el diagnóstico de Microsoft 365 y cuánto cuesta para su empresa.",
-      cta: "Quiero saber más"
-    }
+    alto: { label: "Riesgo alto", title: d => "Hoy cualquiera podría enviar correos en nombre de " + d + ".",
+      sub: "Y llegarían a la bandeja de entrada de sus clientes y de su propio equipo, sin ninguna advertencia." },
+    medio: { label: "Riesgo medio", title: d => d + " está protegido, pero no del todo.",
+      sub: "Algunos correos falsos en su nombre todavía podrían llegar a sus clientes o a su equipo." },
+    bajo: { label: "Riesgo bajo", title: d => "El correo de " + d + " está bien protegido en lo básico.",
+      sub: "El siguiente riesgo suele estar en las cuentas: contraseñas, accesos y administradores." }
   };
 
-  function render(domain, res) {
+  const ERRORS = {
+    correo: () => "Revise su correo. Debe verse así: nombre@suempresa.com.co.",
+    gratuito: () => "Ese es un correo personal (Gmail, Hotmail y similares). Escriba el correo de su empresa para revisar su dominio.",
+    whatsapp: () => "Revise su WhatsApp. Escriba el número completo, por ejemplo 300 123 4567.",
+    consentimiento: () => "Para enviarle el resultado necesitamos su autorización para usar estos datos.",
+    dominio: d => "No encontramos el dominio " + (d || "de su correo") + ". Revise cómo escribió su correo.",
+    limite: () => "Hizo varias revisiones seguidas. Intente de nuevo en unos minutos."
+  };
+
+  function showMsg(text, withWhatsApp) {
+    msg.replaceChildren(document.createTextNode(text));
+    if (withWhatsApp) {
+      msg.append(" ", link("Escríbanos por WhatsApp", wa("Hola, quiero la revisión gratis del correo de mi empresa" +
+        (emailIn.value.trim() ? " (" + emailIn.value.trim() + ")" : "") + "."), null, true), " y la hacemos por usted.");
+    }
+    msg.hidden = false;
+  }
+
+  function render(res, demo) {
     const c = COPY[res.nivel];
     out.replaceChildren();
     out.classList.remove("reveal");
     out.append(el("span", "level level-" + res.nivel, c.label));
-    out.append(el("h2", null, c.title(domain)));
+    out.append(el("h2", null, c.title(res.dominio)));
     out.append(el("p", "sub", c.sub));
     const meter = el("div", "meter " + res.nivel);
     meter.setAttribute("aria-hidden", "true");
@@ -275,79 +221,89 @@
         ? "Encontramos 1 punto débil en la protección de su correo."
         : "Encontramos " + res.puntos + " puntos débiles en la protección de su correo."));
 
-    const next = el("p", "next-step");
-    const strong = el("strong", null, res.nivel === "bajo" ? "Diagnóstico de Microsoft 365" : "Protección de correo");
-    const link = el("a", null, "Ver qué incluye");
-    link.href = res.nivel === "bajo" ? "servicios.html#diagnostico" : "servicios.html#correo";
-    next.append(document.createTextNode("Siguiente paso: "), strong,
-      document.createTextNode(res.nivel === "bajo" ? ", desde $1.600.000. " : ", precio fijo de $890.000 por dominio. "), link);
-    out.append(next);
-
-    const gate = el("div", "gate");
-    gate.append(el("h3", null, c.gateTitle), el("p", null, c.gateText));
-    const f = document.createElement("form");
-    f.noValidate = true;
-    f.dataset.lead = res.nivel === "bajo" ? "diagnostico" : "informe";
-    f.innerHTML =
-      '<div class="form-grid two">' +
-      '<div><label for="g-nombre">Nombre</label><input class="field" id="g-nombre" name="nombre" autocomplete="name"></div>' +
-      '<div><label for="g-correo">Correo de trabajo</label><input class="field" id="g-correo" name="correo" type="email" autocomplete="email" placeholder="nombre@suempresa.com.co"></div>' +
-      '<div class="full"><label for="g-wa">WhatsApp <span class="opt">(opcional)</span></label><input class="field" id="g-wa" name="whatsapp" type="tel" autocomplete="tel" placeholder="300 123 4567"></div>' +
-      '<label class="consent full"><input type="checkbox" name="consentimiento"><span>Autorizo a Jutte a usar estos datos para enviarme el informe y contactarme, según su <a href="privacidad.html">política de tratamiento de datos</a>.</span></label>' +
-      "</div>" +
-      '<p class="msg" role="alert" hidden></p>' +
-      '<div class="form-actions"><button class="btn btn-green" type="submit"></button><a class="link-arrow" target="_blank" rel="noopener">Prefiero hablar por WhatsApp</a></div>';
-    $("button", f).textContent = c.cta;
-    $("a.link-arrow", f).href = wa("Hola, revisé " + domain + " en jutte.co y quiero hablar sobre el resultado.");
-    const done = el("div", "done");
-    done.hidden = true;
-    done.setAttribute("role", "status");
-    gate.append(f, done);
-    out.append(gate);
-    wireForm(f, () => ({ dominio: domain, nivel: res.nivel }));
-
+    if (demo) {
+      const note = el("p", "sent", "Este es el resultado de jutte.co. Para ver el de su empresa, escriba su correo y su WhatsApp en el formulario.");
+      out.append(note);
+    } else {
+      const plan = PLANS[planFor(res)];
+      const offer = el("div", "offer");
+      offer.append(el("p", "offer-k", "Le recomendamos"), el("h3", null, plan.name));
+      const price = el("p", "offer-price");
+      price.append(el("strong", null, plan.price), document.createTextNode(" " + plan.unit));
+      offer.append(price, el("p", null, plan.text));
+      const actions = el("div", "offer-actions");
+      actions.append(link("Ver qué incluye", plan.href, "btn btn-green"),
+        link("Hablar por WhatsApp", wa("Hola, hice la revisión de " + res.dominio + " en jutte.co y quiero hablar sobre el resultado."), "btn btn-line", true));
+      if (BOOKINGS) actions.append(link("Agendar 20 minutos", BOOKINGS, "link-arrow", true));
+      offer.append(actions);
+      out.append(offer);
+      out.append(el("p", "sent", res.correoEnviado
+        ? "También le enviamos este resultado a " + res.correo + "."
+        : "Guardamos su resultado. Le escribiremos a " + res.correo + " con los detalles."));
+      const again = el("button", "link-arrow again", "Revisar otro correo");
+      again.type = "button";
+      again.addEventListener("click", () => { out.hidden = true; form.hidden = false; emailIn.focus(); });
+      out.append(again);
+      form.hidden = true;
+    }
     out.hidden = false;
     void out.offsetWidth;
     out.classList.add("reveal");
   }
 
-  function showMsg(text) { msg.textContent = text; msg.hidden = false; out.hidden = true; }
-
-  async function run(raw, fuente) {
+  async function check() {
     msg.hidden = true;
-    const domain = normalize(raw);
-    if (domain === "") return showMsg("Escriba el dominio de su empresa, por ejemplo suempresa.com.co.");
-    if (!domain) return showMsg("Eso no parece un dominio. Escríbalo así: suempresa.com.co, sin http ni www.");
-    if (FREE.has(domain)) return showMsg(domain + " es un correo gratuito, no el dominio de su empresa. Escriba lo que va después de la @ en el correo de su empresa.");
-    input.value = domain;
+    const correo = emailIn.value.trim().toLowerCase();
+    const whatsapp = waIn.value.trim();
+    const domain = domainOf(correo);
+    if (!domain) return showMsg(ERRORS.correo());
+    if (FREE.has(domain)) return showMsg(ERRORS.gratuito());
+    if (!phoneOk(whatsapp)) return showMsg(ERRORS.whatsapp());
+    if (!form.elements.consentimiento.checked) return showMsg(ERRORS.consentimiento());
     btn.disabled = true;
-    btn.textContent = "Revisando…";
+    btn.textContent = "Revisando " + domain + "…";
     try {
-      const [mx, txt, dmarc, dkimMs, dkimG] = await Promise.all([
-        query(domain, "MX"), query(domain, "TXT"), query("_dmarc." + domain, "TXT"),
-        query("selector1._domainkey." + domain, "CNAME"), query("google._domainkey." + domain, "TXT")
-      ]);
-      if (mx.Status === 3) return showMsg(domain + " no existe. Revise cómo lo escribió.");
-      const res = analyze(mx, txt, dmarc, dkimMs, dkimG);
-      current = domain;
-      render(domain, res);
-      const ref = new URLSearchParams(location.search).get("r") || "";
-      send({ tipo: "consulta", dominio: domain, fuente, ref, nivel: res.nivel, puntos: res.puntos,
-        plataforma: res.plataforma, spf: res.spf, dmarc: res.dmarc, dkim: res.dkim, mx: res.mx });
+      const { status, data } = await post({
+        tipo: "revision", correo, whatsapp, consentimiento: true, politica: POLICY_VERSION,
+        ref, fuente: ref ? "enlace" : "formulario", jt_confirm: form.elements.jt_confirm.value || ""
+      });
+      if (status === 200 && data && data.ok && COPY[data.nivel]) {
+        render(Object.assign({ correo }, data), false);
+        out.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+      } else if (data && ERRORS[data.error]) {
+        showMsg(ERRORS[data.error](data.dominio));
+      } else {
+        showMsg("No pudimos completar la revisión en este momento.", true);
+      }
     } catch (e) {
-      showMsg("No pudimos hacer la revisión en este momento. Intente de nuevo en un minuto, o escríbanos y la hacemos por usted.");
+      showMsg("No pudimos completar la revisión en este momento.", true);
     } finally {
       btn.disabled = false;
-      btn.textContent = "Revisar mi dominio";
+      btn.textContent = "Ver mi resultado";
     }
   }
 
-  form.addEventListener("submit", e => { e.preventDefault(); run(input.value, "formulario"); });
-  $$("[data-check]").forEach(b => b.addEventListener("click", () => {
-    input.value = b.dataset.check;
+  async function demo() {
     section.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
-    run(b.dataset.check, "boton");
-  }));
-  const pre = new URLSearchParams(location.search).get("dominio");
-  if (pre) { input.value = pre; section.scrollIntoView(); run(pre, "enlace"); }
+    msg.hidden = true;
+    try {
+      const { status, data } = await post({ tipo: "demo" });
+      if (status === 200 && data && data.ok && COPY[data.nivel]) render(data, true);
+      else showMsg("No pudimos mostrar el ejemplo en este momento. Intente de nuevo en un minuto.");
+    } catch (e) {
+      showMsg("No pudimos mostrar el ejemplo en este momento. Intente de nuevo en un minuto.");
+    }
+  }
+
+  form.addEventListener("submit", e => { e.preventDefault(); check(); });
+  $$("[data-demo]").forEach(b => b.addEventListener("click", demo));
+
+  /* Arrivals from an outreach link: ?dominio=firma.com&r=code */
+  const pre = (params.get("dominio") || "").toLowerCase().replace(/[^a-z0-9.-]/g, "").slice(0, 120);
+  if (pre) {
+    emailIn.placeholder = "nombre@" + pre;
+    section.scrollIntoView();
+    post({ tipo: "visita", dominio: pre, ref }, { keepalive: true, timeout: 10000 }).catch(() => {});
+  }
+  if (params.get("demo")) demo();
 })();
