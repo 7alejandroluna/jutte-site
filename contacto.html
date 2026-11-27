@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src https://dns.google https://jutte-consultas.azurewebsites.net; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src https://jutte-consultas.azurewebsites.net; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Contacto | Jutte</title>
 <meta name="description" content="Escríbanos por el formulario, WhatsApp o correo. Respondemos el mismo día hábil o el siguiente.">
@@ -16,9 +16,9 @@
 <meta name="theme-color" content="#0B3B33">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B3B33'/%3E%3Ccircle cx='35' cy='14' r='4.5' fill='%23fff'/%3E%3Cpath d='M35 25v19q0 9-9 9h-4' stroke='%23fff' stroke-width='7' fill='none' stroke-linecap='round'/%3E%3Cpath d='M14 58h30q4 0 4-4v-6' stroke='%238FDDBF' stroke-width='4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preload" href="assets/geist.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/site.css?v=35bef29c">
+<link rel="stylesheet" href="assets/site.css?v=72b36787">
 <script src="assets/boot.js"></script>
-<script src="assets/site.js?v=35bef29c" defer></script>
+<script src="assets/site.js?v=72b36787" defer></script>
 </head>
 <body>
 <a class="skip" href="#main">Saltar al contenido</a>
@@ -26,7 +26,7 @@
   <div class="wrap bar">
     <a class="brand" href="./" aria-label="Jutte, inicio">jutte</a>
     <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu">Menú</button>
-    <nav class="menu" id="menu" aria-label="Principal"><a href="./">Inicio</a><a href="servicios.html">Servicios</a><a href="nosotros.html">Nosotros</a><a href="contacto.html" aria-current="page">Contacto</a><a class="pill" href="./#revisar">Revisar mi dominio</a></nav>
+    <nav class="menu" id="menu" aria-label="Principal"><a href="./">Inicio</a><a href="servicios.html">Servicios</a><a href="nosotros.html">Nosotros</a><a href="contacto.html" aria-current="page">Contacto</a><a class="pill" href="./#revisar">Revisión gratis</a></nav>
   </div>
 </header>
 
@@ -42,9 +42,9 @@
             <span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/></svg></span>
             <div><strong>WhatsApp</strong><span>+57 316 521 5117</span></div>
           </a>
-          <a class="way" href="mailto:william@jutte.co">
+          <a class="way" href="mailto:contact@jutte.co">
             <span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>
-            <div><strong>Correo</strong><span>william@jutte.co</span></div>
+            <div><strong>Correo</strong><span>contact@jutte.co</span></div>
           </a>
           <div class="way">
             <span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>
@@ -52,7 +52,7 @@
           </div>
           <a class="way" href="./#revisar">
             <span class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg></span>
-            <div><strong>¿Aún no sabe qué necesita?</strong><span>Revise su dominio gratis en segundos.</span></div>
+            <div><strong>¿Aún no sabe qué necesita?</strong><span>Haga la revisión gratis, en segundos.</span></div>
           </a>
         </div>
       </div>
@@ -65,11 +65,11 @@
             <div><label for="c-nombre">Nombre</label><input class="field" id="c-nombre" name="nombre" autocomplete="name"></div>
             <div><label for="c-empresa">Empresa</label><input class="field" id="c-empresa" name="empresa" autocomplete="organization"></div>
             <div><label for="c-correo">Correo de trabajo</label><input class="field" id="c-correo" name="correo" type="email" autocomplete="email" placeholder="nombre@suempresa.com.co"></div>
-            <div><label for="c-wa">WhatsApp <span class="opt">(opcional)</span></label><input class="field" id="c-wa" name="whatsapp" type="tel" autocomplete="tel" placeholder="300 123 4567"></div>
+            <div><label for="c-wa">WhatsApp</label><input class="field" id="c-wa" name="whatsapp" type="tel" inputmode="tel" autocomplete="tel" placeholder="300 123 4567"></div>
             <div class="full"><label for="c-servicio">¿Qué le interesa?</label>
               <select class="field" id="c-servicio" name="servicio">
                 <option value="">Elija una opción</option>
-                <option value="Chequeo de correo">Chequeo de correo gratis</option>
+                <option value="Revisión de correo">Revisión de correo gratis</option>
                 <option value="Protección de correo">Protección de correo</option>
                 <option value="Diagnóstico de Microsoft 365">Diagnóstico de Microsoft 365</option>
                 <option value="Blindaje de Microsoft 365">Blindaje de Microsoft 365</option>
@@ -82,7 +82,8 @@
               </select>
             </div>
             <div class="full"><label for="c-mensaje">Mensaje <span class="opt">(opcional)</span></label><textarea class="field" id="c-mensaje" name="mensaje" placeholder="Cuántas personas son, qué usan para el correo, qué le preocupa."></textarea></div>
-            <label class="consent full"><input type="checkbox" name="consentimiento"><span>Autorizo a Jutte a usar estos datos para responderme y contactarme, según su <a href="privacidad.html">política de tratamiento de datos</a>.</span></label>
+            <div class="hp" aria-hidden="true"><label for="k-jt">No llene este campo</label><input id="k-jt" name="jt_confirm" type="text" tabindex="-1" autocomplete="off"></div>
+            <label class="consent full"><input type="checkbox" name="consentimiento"><span>Autorizo a Jutte a usar estos datos para responderme y contactarme con información de sus servicios por correo y WhatsApp, según su <a href="privacidad.html">política de tratamiento de datos</a>. Puedo pedir que dejen de contactarme cuando quiera.</span></label>
           </div>
           <p class="msg" role="alert" hidden></p>
           <div class="form-actions"><button class="btn btn-green" type="submit">Enviar mensaje</button></div>
@@ -97,7 +98,7 @@
       <h2 class="big" id="after-title" data-reveal>Qué pasa después.</h2>
       <ol class="timeline">
         <li data-reveal><span class="dot" aria-hidden="true">1</span><h3>Le respondemos</h3><p>El mismo día hábil o el siguiente, por el medio que prefiera.</p></li>
-        <li data-reveal><span class="dot" aria-hidden="true">2</span><h3>Revisamos su caso</h3><p>Hacemos el chequeo gratis de su dominio y le contamos lo que vemos en una llamada de 20 minutos.</p></li>
+        <li data-reveal><span class="dot" aria-hidden="true">2</span><h3>Revisamos su caso</h3><p>Hacemos la revisión gratis de su dominio y le contamos lo que encontramos en una llamada de 20 minutos.</p></li>
         <li data-reveal><span class="dot" aria-hidden="true">3</span><h3>Le proponemos un paso</h3><p>Con precio fijo y por escrito. Si no le sirve, no pasa nada.</p></li>
       </ol>
     </div>
@@ -109,12 +110,12 @@
     <div class="foot-grid">
       <div>
         <a class="brand" href="./" aria-label="Jutte, inicio">jutte</a>
-        <p>Seguridad de correo y Microsoft 365 para empresas en Cali. Desarmamos al atacante antes de que haga daño.</p>
+        <p>Seguridad de correo y Microsoft 365 para empresas en Colombia. Desarmamos al atacante antes de que haga daño.</p>
       </div>
       <div>
         <h2>Servicios</h2>
         <ul>
-          <li><a href="servicios.html#chequeo">Chequeo de correo</a></li>
+          <li><a href="servicios.html#chequeo">Revisión de correo</a></li>
           <li><a href="servicios.html#correo">Protección de correo</a></li>
           <li><a href="servicios.html#diagnostico">Diagnóstico de Microsoft 365</a></li>
           <li><a href="servicios.html#blindaje">Blindaje de Microsoft 365</a></li>
@@ -128,7 +129,7 @@
           <li><a href="./">Inicio</a></li>
           <li><a href="nosotros.html">Nosotros</a></li>
           <li><a href="contacto.html">Contacto</a></li>
-          <li><a href="./#revisar">Revisar mi dominio</a></li>
+          <li><a href="./#revisar">Revisión gratis</a></li>
           <li><a href="privacidad.html">Tratamiento de datos</a></li>
         </ul>
       </div>
@@ -136,7 +137,7 @@
         <h2>Contacto</h2>
         <ul>
           <li><a href="https://wa.me/573165215117" rel="noopener">WhatsApp +57 316 521 5117</a></li>
-          <li><a href="mailto:william@jutte.co">william@jutte.co</a></li>
+          <li><a href="mailto:contact@jutte.co">contact@jutte.co</a></li>
           <li>Cali, Valle del Cauca</li>
         </ul>
       </div>
